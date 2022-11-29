@@ -1,0 +1,118 @@
+<!doctype html>
+<script>
+    class FormatBuilderBase {
+        constructor() {
+            if (this.constructor == FormatBuilderBase) {
+                throw new Error("Abstract classes can't be instantiated.");
+            }
+        }
+
+        addHeader() {
+            throw new Error("Method 'addHeader' should be implemented.");
+        }
+
+        addBody() {
+            throw new Error("Method 'addBody' should be implemented.");
+        }
+
+        addFooter() {
+            throw new Error("Method 'addFooter' should be implemented.");
+        }
+
+        getResult() {
+            throw new Error("Method 'getResult' should be implemented.");
+        }
+    }
+
+    class JsonBuilder extends FormatBuilderBase {
+        _result = "";
+        
+        constructor(root, properties) {
+            super();
+            this.delimiter = ',\n\t\t';
+            this.root = root;
+            this.properties = properties;
+        }
+
+        addHeader() {
+            this._result += `{\n\t"${this.root}": {\t\n\t\t`;
+        }
+
+        addBody() {
+            this._result += this.properties.map((property) => `"${property.key}": "${property.value}"`)
+                                        .join(this.delimiter);
+        }
+
+        addFooter() {
+            this._result += `\n\t}\n}`;
+        }
+
+        getResult() {
+            return this._result;
+        }
+    }
+
+    class XmlBuilder extends FormatBuilderBase {
+        _result = "";
+        
+        constructor(root, properties) {
+            super();
+            this.delimiter = '\n\t';
+            this.root = root;
+            this.properties = properties;
+        }
+
+        addHeader() {
+            this._result += `<?xml version="1.0"?>\n<${this.root}>\n\t`;
+        }
+
+        addBody() {
+            this._result += this.properties.map((property) => `<${property.key}>"${property.value}"</${property.key}>`)
+                                        .join(this.delimiter);
+        }
+
+        addFooter() {
+            this._result += `\n</${this.root}>`;
+        }
+
+        getResult() {
+            return this._result;
+        }
+    }
+
+    class FormatDirector {
+        constructor(formatBuilder) {
+            if (!formatBuilder instanceof FormatBuilderBase) {
+                throw Error("Object of class or child class of FormatBuilder should be provided in FormatDirector.");
+            }
+
+            this.formatBuilder = formatBuilder;
+        }
+
+        serialize() {
+            this.formatBuilder.addHeader();
+            this.formatBuilder.addBody();
+            this.formatBuilder.addFooter();
+
+            return this.formatBuilder.getResult();
+        }
+    }
+
+    class KeyValueItem {
+        constructor(key, value) {
+            this.key = key;
+            this.value = value;
+        }
+    }
+
+    var jsonBuilder = new JsonBuilder("User", [new KeyValueItem("login", "Admin"), new KeyValueItem("password", "Qwerty123")]);
+    var jsonDirector = new FormatDirector(jsonBuilder);
+    var jsonResult = jsonDirector.serialize(jsonBuilder);
+    console.log(jsonResult);
+
+    var xmlBuilder = new XmlBuilder("User", [new KeyValueItem("login", "Admin"), new KeyValueItem("password", "Qwerty123")]);
+    var xmlDirector = new FormatDirector(xmlBuilder);
+    var xmlResult = xmlDirector.serialize(xmlBuilder);
+    console.log(xmlResult);
+
+</script>
